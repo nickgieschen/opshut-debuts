@@ -1,8 +1,6 @@
 package debuts
 
 import com.nhaarman.mockito_kotlin.*
-import com.typesafe.config.Config
-import com.typesafe.config.ConfigFactory
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.it
@@ -16,14 +14,15 @@ object Tests : Spek({
         val debutedPlayer = BrPlayer("1", "Babe Ruth", "", "foo")
         var mockData = mock<Data>()
         var mockYahoo = mock<Yahoo>()
-        val config: Config = ConfigFactory.load()
-        var app = App(config, mockYahoo, mockData, messager)
+        var mockMessager = mock<Messager>()
+        var app = App(mockYahoo, mockData, mockMessager)
 
         beforeEachTest {
             mockData = mock<Data>()
             mockYahoo = mock<Yahoo>()
+            mockMessager = mock<Messager>()
             whenever(mockData.findDebutPlayers()).thenReturn(listOf(debutedPlayer))
-            app = App(config, mockYahoo, mockData, messager)
+            app = App(mockYahoo, mockData, mockMessager)
         }
 
         on("adding player to stash") {
@@ -129,13 +128,14 @@ object Tests : Spek({
 
         var mockData = mock<Data>()
         var mockYahoo = mock<Yahoo>()
-        val config: Config = ConfigFactory.load()
-        var app = App(config, mockYahoo, mockData, messager)
+        var mockMessager = mock<Messager>()
+        var app = App(mockYahoo, mockData, mockMessager)
 
         beforeEachTest {
             mockData = mock<Data>()
             mockYahoo = mock<Yahoo>()
-            app = App(config, mockYahoo, mockData, messager)
+            mockMessager = mock<Messager>()
+            app = App(mockYahoo, mockData, mockMessager)
         }
 
         on("dropping player from stash") {

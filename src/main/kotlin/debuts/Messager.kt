@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.ws.rs.core.MediaType
 
+@Open
 class Messager(val mailApiKey: String){
 
     val logger: Logger by lazy { LoggerFactory.getLogger(javaClass) }

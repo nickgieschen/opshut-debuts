@@ -49,6 +49,7 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
                     "dropfromstash" -> app.dropPlayersFromStash()
                     "createinitialdebuts" -> app.createInitialDebuts()
                     "refreshaccesstoken" -> yahoo.getNewToken()
+                    "sendtransactionsemail" -> app.sendTransactionsEmail()
                     "info" -> app.getInfo(getPlayerId(cl))
                 }
             } catch(e: Exception) {
@@ -58,6 +59,10 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
     }
 
     val logger: Logger by lazy { LoggerFactory.getLogger(javaClass) }
+
+    fun sendTransactionsEmail() {
+        messager.sendResults(Message("subject", "body"))
+    }
 
     fun getInfo(playerId: String) {
 
