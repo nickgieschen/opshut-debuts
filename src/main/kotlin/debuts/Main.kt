@@ -41,7 +41,7 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
                 //testing = cl.hasOption("t")
 
                 val cmd = cl.argList.last()
-                logger.info("executing $cmd")
+                println("executing $cmd")
 
                 when (cmd) {
                     "addplayertostash" -> app.addPlayersToStash(getPlayerId(cl))
@@ -51,6 +51,7 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
                     "refreshaccesstoken" -> yahoo.getNewToken()
                     "sendtransactionsemail" -> app.sendTransactionsEmail()
                     "info" -> app.getInfo(getPlayerId(cl))
+                    else -> println("No command $cmd")
                 }
             } catch(e: Exception) {
                 logger.error(e.message)
