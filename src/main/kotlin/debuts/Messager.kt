@@ -4,24 +4,23 @@ import com.sun.jersey.api.client.Client
 import com.sun.jersey.api.client.ClientResponse
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter
 import com.sun.jersey.core.util.MultivaluedMapImpl
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.ws.rs.core.MediaType
 
 @Open
-class Messager(val mailApiKey: String){
+class Messager(val mailApiKey: String, val mailDomain: String){
 
-    val logger: Logger by lazy { LoggerFactory.getLogger(javaClass) }
+    val logger = LoggerFactory.getLogger(javaClass)
 
     fun sendResults(message: Message) {
         try {
             val client = Client.create()
             client.addFilter(HTTPBasicAuthFilter("api", mailApiKey))
-            val webResource = client.resource("https://api.mailgun.net/v3/sandbox3399bf9e4d004e239afcc5e0e0b1c336.mailgun.org/messages")
+            val webResource = client.resource("https://api.mailgun.net/v3/$mailDomain/messages")
             val formData = MultivaluedMapImpl()
-            formData.add("from", "Mailgun Sandbox <postmaster@sandbox3399bf9e4d004e239afcc5e0e0b1c336.mailgun.org>")
+            formData.add("from", "Mailgun Sandbox <postmaster@$mailDomain>")
             formData.add("to", "nick@nickgieschen.com")
             formData.add("subject", "Debuts: ${message.subject} - ${SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().time)}")
             formData.add("text", message.body)
