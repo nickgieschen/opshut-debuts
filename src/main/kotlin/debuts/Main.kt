@@ -46,7 +46,7 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
                 when (cmd) {
                     "addplayertostash" -> app.addPlayersToStash(getPlayerId(cl))
                     "addplayerstostash" -> app.addPlayersToStash()
-                    "dropfromstash" -> app.dropPlayersFromStash()
+                    "dropplayersfromstash" -> app.dropPlayersFromStash()
                     "createinitialdebuts" -> app.createInitialDebuts()
                     "refreshaccesstoken" -> yahoo.getNewToken()
                     "sendtransactionsemail" -> app.sendTransactionsEmail()
@@ -54,7 +54,7 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
                     else -> logger.error("No command $cmd")
                 }
             } catch(e: Exception) {
-                logger.error(e.message)
+                logger.error(e.message, e)
             }
         }
     }
