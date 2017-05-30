@@ -56,7 +56,7 @@ object IntegrationTests : Spek({
             }
         }
 
-        on("finding debut players"){
+        on("finding debut players") {
             it("finds debut players") {
                 val players = data.findDebutPlayers()
                 assertThat(players).isNotNull
@@ -65,6 +65,12 @@ object IntegrationTests : Spek({
     }
 
     context("yahoo") {
+
+        on("finding transactions") {
+            it("finds a transaction") {
+                yahoo.findTransactions()
+            }
+        }
 
         on("finding a player") {
             it("finds a player") {

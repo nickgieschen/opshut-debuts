@@ -276,4 +276,3 @@ data class Entry(var timestamp: Date?, val brPlayer: BrPlayer, val yahooPlayer: 
         return mapper.writeValueAsString(this)
     }
 }
-

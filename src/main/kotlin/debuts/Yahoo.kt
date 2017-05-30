@@ -8,7 +8,6 @@ import com.github.scribejava.core.model.OAuthRequest
 import com.github.scribejava.core.model.Verb
 import com.typesafe.config.Config
 import org.jdom2.input.SAXBuilder
-import org.jdom2.output.XMLOutputter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.StringReader
@@ -76,7 +75,59 @@ class Yahoo(val data: Data, val config: Config) {
             .build(YahooApi.instance())
 
     val leagueUrl = config.getString("yahoo.leagueUrl")
-    val stash2Key = config.getString("yahoo.stash2Key")
+    val stashKey = config.getString("yahoo.stashKey")
+
+    fun findTransactions(): Array<MutableList<String>> {
+        val response = sendRequest(Verb.GET, "$leagueUrl/transactions")
+        val sax = SAXBuilder()
+        val doc = sax.build(StringReader(response))
+        val ns = doc.rootElement.namespace
+        val cal = Calendar.getInstance()
+        cal.add(Calendar.DATE, -23)
+        val aDayAgo = cal.time!!
+        val adds = mutableListOf<String>()
+        val drops = mutableListOf<String>()
+        val trades = mutableListOf<String>()
+        val debuts = mutableListOf<String>()
+        doc.rootElement.getChild("league", ns).getChild("transactions", ns).children.forEach {
+            val timestamp = it.getChildText("timestamp", ns).toLong() * 1000
+            if (Date(timestamp).after(aDayAgo)) {
+                if (it.getChildText("status", ns) == "successful") {
+                    val type = it.getChildText("type", ns)
+                    if (type == "add" || type == "drop" || type == "add/drop") {
+                        it.getChild("players", ns).children.forEach {
+                            val player = it.getChild("name", ns).getChildText("full", ns)
+                            val transactionData = it.getChild("transaction_data", ns)
+                            val transactionType = transactionData.getChildText("type", ns)
+                            if (transactionType == "add") {
+                                val source = transactionData.getChildText("source_type", ns)
+                                val destTeam = transactionData.getChildText("destination_team_name", ns)
+                                adds.add("$player added to $destTeam from $source")
+                            } else {
+                                val sourceTeam = transactionData.getChildText("source_team_name", ns)
+                                val destination = transactionData.getChildText("destination_type", ns)
+                                if (transactionData.getChildText("source_team_key", ns) == stashKey) {
+                                    debuts.add(player)
+                                } else {
+                                    drops.add("$player dropped from $sourceTeam to $destination")
+                                }
+                            }
+                        }
+                    } else if (type == "trade") {
+                        val team1 = it.getChildText("trader_team_name", ns)
+                        val team2 = it.getChildText("tradee_team_name", ns)
+                        val teamsToPlayers = mutableMapOf(team1 to mutableListOf<String>(), team2 to mutableListOf<String>())
+                        it.getChild("players", ns).children.forEach {
+                            val player = it.getChild("name", ns).getChildText("full", ns)
+                            teamsToPlayers[it.getChild("transaction_data", ns).getChildText("source_team_name", ns)]!!.add(player)
+                        }
+                        trades.add("$team1 traded ${teamsToPlayers[team1]!!.fold("") { a, s -> "$s, " }.trimEnd(',', ' ')} to $team2 for ${teamsToPlayers.get(team2)!!.fold("") { a, s -> "$s, " }.trimEnd(',', ' ')}")
+                    }
+                }
+            }
+        }
+        return arrayOf(adds, drops, debuts, trades)
+    }
 
     fun findPlayer(player: BrPlayer): List<YahooPlayer> {
         val lastPartOfName = player.name.substringAfterLast(" ")
@@ -85,7 +136,6 @@ class Yahoo(val data: Data, val config: Config) {
         val doc = sax.build(StringReader(response))
         val ns = doc.rootElement.namespace
         val p = doc.rootElement.getChild("league", ns).getChild("players", ns).children.map {
-            print(XMLOutputter().outputString(it))
             YahooPlayer(it.getChild("name", ns).getChildText("full", ns),
                     it.getChild("name", ns).getChildText("ascii_first", ns),
                     it.getChild("name", ns).getChildText("ascii_last", ns),
@@ -101,35 +151,35 @@ class Yahoo(val data: Data, val config: Config) {
     }
 
     fun dropPlayerFromStash(player: Entry) {
-            val dropPayload = """<fantasy_content>
+        val dropPayload = """<fantasy_content>
       <transaction>
         <type>drop</type>
         <player>
           <player_key>${player.yahooPlayer!!.key}</player_key>
           <transaction_data>
             <type>drop</type>
-            <source_team_key>$stash2Key</source_team_key>
+            <source_team_key>$stashKey</source_team_key>
           </transaction_data>
         </player>
       </transaction>
     </fantasy_content>"""
-            sendRequest(Verb.POST, "$leagueUrl/transactions?format=xml", dropPayload)
+        sendRequest(Verb.POST, "$leagueUrl/transactions?format=xml", dropPayload)
     }
 
     fun addPlayerToStash(player: Entry) {
-            val addPayload = """<fantasy_content>
+        val addPayload = """<fantasy_content>
       <transaction>
         <type>add</type>
         <player>
           <player_key>${player.yahooPlayer!!.key}</player_key>
           <transaction_data>
             <type>add</type>
-            <destination_team_key>$stash2Key</destination_team_key>
+            <destination_team_key>$stashKey</destination_team_key>
           </transaction_data>
         </player>
       </transaction>
     </fantasy_content>"""
-            sendRequest(Verb.POST, "$leagueUrl/transactions?format=xml", addPayload)
+        sendRequest(Verb.POST, "$leagueUrl/transactions?format=xml", addPayload)
     }
 
     fun sendRequest(verb: Verb, url: String, payload: String? = null): String? {
@@ -217,7 +267,7 @@ class Yahoo(val data: Data, val config: Config) {
             }["oauth_session_handle"] ?: throw Exception("Session handle could not be extracted.")
         }
 
-        constructor(sessionHandle: String, token: String, tokenSecret: String) : super(token, tokenSecret){
+        constructor(sessionHandle: String, token: String, tokenSecret: String) : super(token, tokenSecret) {
             this.sessionHandle = sessionHandle
         }
     }
