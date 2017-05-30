@@ -1,10 +1,6 @@
-To deploy:
-git add, git commit
-gradle stage
-git subtree push --prefix debuts heroku master
-heroku local:run ./build/install/debuts/bin/debuts -t addtostash
+heroku run ./build/install/debuts/bin/debuts addtostash
 
-Yearly, we need to update the leagueId (e.g. 370.l.46651). We need to update both the game Id (370) and the leagueId (46651). We also need to update the Stash team Ids.
+Yearly, we need to update the leagueId (e.g. 370.l.46651). We need to update both the game Id (370) and the leagueId (46651). We also need to update the Stash team IDs.
 
 We need to set the clientId and clientSecret of the owner of stash. Get them here: https://developer.yahoo.com/apps/
 
