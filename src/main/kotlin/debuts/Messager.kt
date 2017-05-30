@@ -10,7 +10,7 @@ import java.util.*
 import javax.ws.rs.core.MediaType
 
 @Open
-class Messager(val mailApiKey: String, val mailDomain: String){
+class Messager(val mailApiKey: String, val mailDomain: String, val fromMailAddress: String){
 
     val logger = LoggerFactory.getLogger(javaClass)
 
@@ -20,7 +20,7 @@ class Messager(val mailApiKey: String, val mailDomain: String){
             client.addFilter(HTTPBasicAuthFilter("api", mailApiKey))
             val webResource = client.resource("https://api.mailgun.net/v3/$mailDomain/messages")
             val formData = MultivaluedMapImpl()
-            formData.add("from", "Mailgun Sandbox <postmaster@$mailDomain>")
+            formData.add("from", fromMailAddress)
             for (recipient in message.recipients){
                 formData.add("to", recipient)
             }

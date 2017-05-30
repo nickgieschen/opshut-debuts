@@ -25,7 +25,7 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager, val debutsMa
 
             val logger: Logger = LoggerFactory.getLogger("Main")
             val config: Config = ConfigFactory.load().getConfig("app")
-            val messager = Messager(config.getString("mailApiKey"), config.getString("mailDomain"))
+            val messager = Messager(config.getString("mailApiKey"), config.getString("mailDomain"), config.getString("fromMailAddress"))
             val jedisPool = constructJedisPool(config.getString("redisUri"), config.getInt("redisDbIndex"))
             val data = Data(jedisPool)
             val yahoo = Yahoo(data, config)
