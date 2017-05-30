@@ -12,7 +12,13 @@ class Data(val jedisPool: JedisPool) {
     fun findDebutPlayers(): List<BrPlayer> {
         return Jsoup.connect("http://www.baseball-reference.com/leagues/MLB/2017-debuts.shtml").get().select("#misc_bio tbody tr").map {
             val tds = it.select("td")
-            BrPlayer(tds[0].select("a").attr("href"), tds[1].text(), tds[3].attr("csk"), tds[6].text())
+            BrPlayer(tds[0].select("a").attr("href"), tds[0].select("a").text(), tds[3].attr("csk"), tds[6].text())
+        }
+    }
+
+    fun findTransactionMailRecipients(): List<String> {
+        jedisPool.resource.use {
+            return it.lrange("transaction-mail-recipients", 0, 0)
         }
     }
 

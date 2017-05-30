@@ -15,7 +15,7 @@ import redis.clients.jedis.Protocol
 import java.net.URI
 import java.util.*
 
-class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
+class App(val yahoo: Yahoo, val data: Data, val messager: Messager, val debutsMailRecipient: String) {
 
     companion object {
         fun getPlayerId(cl: CommandLine) = cl.getOptionValue("p", null)!!
@@ -29,7 +29,8 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
             val jedisPool = constructJedisPool(config.getString("redisUri"), config.getInt("redisDbIndex"))
             val data = Data(jedisPool)
             val yahoo = Yahoo(data, config)
-            val app = App(yahoo, data, messager)
+            val app = App(yahoo, data, messager,
+                config.getString("debutsMailRecipient"))
 
             try {
                 val options = Options()
@@ -63,7 +64,25 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
     val logger = LoggerFactory.getLogger(javaClass)
 
     fun sendTransactionsEmail() {
-        messager.sendResults(Message("subject", "body"))
+        val transactions = yahoo.findTransactions()
+
+        val messageBody = StringBuilder()
+        messageBody.append("Adds\n")
+        messageBody.append("=====================\n")
+        messageBody.append(transactions[0].fold("") { acc, entry -> acc + entry + "\n" })
+        messageBody.append("\nDrops\n")
+        messageBody.append("=====================\n")
+        messageBody.append(transactions[1].fold("") { acc, entry -> acc + entry + "\n" })
+        messageBody.append("\nDebuts\n")
+        messageBody.append("=====================\n")
+        messageBody.append(transactions[2].fold("") { acc, entry -> acc + entry + "\n" })
+        messageBody.append("\nTrades\n")
+        messageBody.append("=====================\n")
+        messageBody.append(transactions[3].fold("") { acc, entry -> acc + entry + "\n" })
+
+        val recipients = data.findTransactionMailRecipients()
+
+        messager.sendResults(Message("Operation Shutdown Transactions", messageBody.toString(), recipients))
     }
 
     fun getInfo(playerId: String) {
@@ -118,7 +137,8 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
 
     fun addPlayersToStash(playerId: String?) {
 
-        val messageBuilder = AddedMessageBuilder("Add to Stash")
+        val messageBuilder = AddedMessageBuilder("Debuts: Add to Stash")
+        messageBuilder.recipients.add(debutsMailRecipient)
 
         val matchedPlayers = mutableListOf<Entry>()
         var unprocessedDebuts = getUnprocessedDebuts()
@@ -184,7 +204,8 @@ class App(val yahoo: Yahoo, val data: Data, val messager: Messager) {
 
     fun dropPlayersFromStash() {
 
-        val messageBuilder = DroppedMessageBuilder("Drop from Stash")
+        val messageBuilder = DroppedMessageBuilder("Debuts: Drop from Stash")
+        messageBuilder.recipients.add(debutsMailRecipient)
         val players = data.findStashedPlayers().filter { it.timestamp!!.before(aDayAgo()) }
 
         players.forEach {

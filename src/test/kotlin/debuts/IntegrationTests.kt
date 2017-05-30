@@ -62,6 +62,13 @@ object IntegrationTests : Spek({
                 assertThat(players).isNotNull
             }
         }
+
+        on("finding transaction mail recipients") {
+            it("finds transaction mail recipients") {
+                val recipients = data.findTransactionMailRecipients()
+                assertThat(recipients).first().isEqualTo("nick@nickgieschen.com")
+            }
+        }
     }
 
     context("yahoo") {

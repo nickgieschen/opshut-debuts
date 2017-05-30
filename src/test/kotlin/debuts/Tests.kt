@@ -1,6 +1,7 @@
 package debuts
 
 import com.nhaarman.mockito_kotlin.*
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.context
 import org.jetbrains.spek.api.dsl.it
@@ -9,20 +10,48 @@ import java.util.*
 
 object Tests : Spek({
 
+    context("app") {
+
+        val mockData = mock<Data>()
+        val mockYahoo = mock<Yahoo>()
+        val mockMessager = mock<Messager>()
+        val transactionMailRecipients = listOf("recipient1", "recipient2")
+        val app = App(mockYahoo, mockData, mockMessager, "rec")
+
+        on("sending a transaction email") {
+           it("should generate a transaction email"){
+               whenever(mockYahoo.findTransactions()).thenReturn(arrayOf(
+                    mutableListOf("added player 1", "added player 2"),
+                    mutableListOf("dropped player 1", "dropped player 2"),
+                    mutableListOf("debuted player 1", "debuted player 2"),
+                    mutableListOf("traded player 1", "traded player 2")))
+               app.sendTransactionsEmail()
+               argumentCaptor<Message>().apply {
+                   verify(mockMessager).sendResults(capture())
+
+                   // We're just gonna output the email here to make sure it looks good
+                   println(firstValue.body)
+
+                   assertThat(firstValue.recipients).isEqualTo(transactionMailRecipients)
+               }
+           }
+        }
+    }
+
     context("adding to stash") {
 
         val debutedPlayer = BrPlayer("1", "Babe Ruth", "", "foo")
         var mockData = mock<Data>()
         var mockYahoo = mock<Yahoo>()
         var mockMessager = mock<Messager>()
-        var app = App(mockYahoo, mockData, mockMessager)
+        var app = App(mockYahoo, mockData, mockMessager, "")
 
         beforeEachTest {
             mockData = mock<Data>()
             mockYahoo = mock<Yahoo>()
             mockMessager = mock<Messager>()
             whenever(mockData.findDebutPlayers()).thenReturn(listOf(debutedPlayer))
-            app = App(mockYahoo, mockData, mockMessager)
+            app = App(mockYahoo, mockData, mockMessager, "")
         }
 
         on("adding player to stash") {
@@ -67,7 +96,6 @@ object Tests : Spek({
             }
         }
 
-        // TODO should verify it gets added to log
         on("adding player to stash of which Yahoo has multiple matches") {
             val yahooPlayer = YahooPlayer("a", "b", "c", "d", "e", "f", "freeagents")
             whenever(mockData.findProcessedPlayers()).thenReturn(listOf<Entry>())
@@ -94,7 +122,6 @@ object Tests : Spek({
             }
         }
 
-        // TODO confirm add to log
         on("adding player to stash which is already on waivers in Yahoo"){
             val yahooPlayer = YahooPlayer("a", "b", "c", "d", "e", "f", "waivers")
             whenever(mockData.findProcessedPlayers()).thenReturn(listOf<Entry>())
@@ -108,7 +135,6 @@ object Tests : Spek({
             }
         }
 
-        // TODO verify message
         on("adding player to stash which is already on stash"){
             val yahooPlayer = YahooPlayer("a", "b", "c", "d", "e", "f", "x", "Stash")
             whenever(mockData.findProcessedPlayers()).thenReturn(listOf<Entry>())
@@ -129,13 +155,13 @@ object Tests : Spek({
         var mockData = mock<Data>()
         var mockYahoo = mock<Yahoo>()
         var mockMessager = mock<Messager>()
-        var app = App(mockYahoo, mockData, mockMessager)
+        var app = App(mockYahoo, mockData, mockMessager, "")
 
         beforeEachTest {
             mockData = mock<Data>()
             mockYahoo = mock<Yahoo>()
             mockMessager = mock<Messager>()
-            app = App(mockYahoo, mockData, mockMessager)
+            app = App(mockYahoo, mockData, mockMessager, "")
         }
 
         on("dropping player from stash") {

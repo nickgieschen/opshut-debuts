@@ -83,7 +83,7 @@ class Yahoo(val data: Data, val config: Config) {
         val doc = sax.build(StringReader(response))
         val ns = doc.rootElement.namespace
         val cal = Calendar.getInstance()
-        cal.add(Calendar.DATE, -23)
+        cal.add(Calendar.DATE, -1)
         val aDayAgo = cal.time!!
         val adds = mutableListOf<String>()
         val drops = mutableListOf<String>()

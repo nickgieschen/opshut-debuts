@@ -21,8 +21,10 @@ class Messager(val mailApiKey: String, val mailDomain: String){
             val webResource = client.resource("https://api.mailgun.net/v3/$mailDomain/messages")
             val formData = MultivaluedMapImpl()
             formData.add("from", "Mailgun Sandbox <postmaster@$mailDomain>")
-            formData.add("to", "nick@nickgieschen.com")
-            formData.add("subject", "Debuts: ${message.subject} - ${SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().time)}")
+            for (recipient in message.recipients){
+                formData.add("to", recipient)
+            }
+            formData.add("subject", "${message.subject} - ${SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().time)}")
             formData.add("text", message.body)
             webResource.type(MediaType.APPLICATION_FORM_URLENCODED).post(ClientResponse::class.java, formData)
         } catch (e: Exception) {
@@ -31,18 +33,20 @@ class Messager(val mailApiKey: String, val mailDomain: String){
     }
 }
 
-class Message(val subject: String, val body: String)
+@Open
+class Message(val subject: String, val body: String, val recipients: List<String>)
 
 abstract class MessageBuilder(val subject: String) {
-    val errorPlayers = mutableListOf<Entry>()
+    val recipients = mutableListOf<String>()
     abstract fun buildBody() : String
     fun buildMessage() : Message {
-        return Message(subject, buildBody())
+        return Message(subject, buildBody(), recipients)
     }
 }
 
 class DroppedMessageBuilder(subject: String) : MessageBuilder(subject) {
 
+    val errorPlayers = mutableListOf<Entry>()
     val droppedFromStashPlayers = mutableListOf<Entry>()
 
     override fun buildBody(): String {
@@ -56,6 +60,7 @@ class DroppedMessageBuilder(subject: String) : MessageBuilder(subject) {
 
 class AddedMessageBuilder(subject: String) : MessageBuilder(subject) {
 
+    val errorPlayers = mutableListOf<Entry>()
     val ambiguousNames = mutableMapOf<BrPlayer, List<YahooPlayer>>()
     val unmatchedPlayers = mutableListOf<BrPlayer>()
     val stashedPlayers = mutableListOf<Entry>()
