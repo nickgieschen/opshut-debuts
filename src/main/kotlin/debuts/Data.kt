@@ -18,7 +18,7 @@ class Data(val jedisPool: JedisPool) {
 
     fun findTransactionMailRecipients(): List<String> {
         jedisPool.resource.use {
-            return it.lrange("transaction-mail-recipients", 0, 0)
+            return it.lrange("transaction-mail-recipients", 0, 30)
         }
     }
 
